@@ -445,9 +445,9 @@ function vSettings(){return `
   <section class="panel"><h3>Voice coach</h3>
    <p class="small mute">Reads each block aloud, calls the changes and counts down the last five seconds. Turn the volume up and the silent switch off. Keep the app open on screen while the clock runs.</p>
    ${canSpeak?`<div class="row"><button class="chip ${state.voice?"on":""}" data-act="voice" aria-pressed="${state.voice}">Voice coach ${state.voice?"on":"off"}</button></div>
-   <label for="s-voice">Coach's voice<select id="s-voice" data-set="voiceName"><option value="">Automatic${voiceObj&&!state.voiceName?" (using "+esc(voiceObj.name)+")":""}</option>${enVoices().sort((a,b)=>voiceScore(b)-voiceScore(a)).filter(v=>voiceScore(v)>-10).map(v=>`<option value="${esc(v.name)}" ${state.voiceName===v.name?"selected":""}>${esc(v.name)} · ${esc(v.lang.replace("_","-"))}</option>`).join("")}</select></label>
+   <label for="s-voice">Coach's voice<select id="s-voice" data-set="voiceName"><option value="">${clipsOK?"Coach (natural recorded voice)":"Automatic"+(voiceObj&&!state.voiceName?" (using "+esc(voiceObj.name)+")":"")}</option>${enVoices().sort((a,b)=>voiceScore(b)-voiceScore(a)).filter(v=>voiceScore(v)>-10).map(v=>`<option value="${esc(v.name)}" ${state.voiceName===v.name?"selected":""}>${esc(v.name)} · ${esc(v.lang.replace("_","-"))}</option>`).join("")}</select></label>
    <div class="row"><button class="btn ghost sm" data-act="test-voice">Play a sample</button></div>
-   <p class="small mute">The voices come from the phone. For a more natural one on iPhone, open the Settings app, go to Accessibility, then Spoken Content, then Voices, choose English, and download an Enhanced or Premium voice. Come back here and pick it from the list.</p>`:`<p class="small warn">This browser has no built-in voice.</p>`}</section>
+   <p class="small mute">${clipsOK?"The Coach voice is an AI-generated voice recorded for this app. It does not say your name. The other voices in the list come from the phone and sound more robotic.":"These voices come from the phone."}</p>`:`<p class="small warn">This browser has no built-in voice.</p>`}</section>
   <section class="panel"><h3>For parents</h3>
    <p class="small mute">These sessions are short on purpose and sit around team training, not on top of it. Three a week is plenty at 13. Keep one full rest day, skip the session the day before a match, dive only on grass or a soft mat, and stop a drill if anything hurts.</p></section>
   <section class="panel"><h3>Back up scores</h3>
@@ -470,14 +470,31 @@ function voiceScore(v){const id=(v.voiceURI||"")+" "+v.name,l=v.lang.replace("_"
   return n;}
 function pickVoice(){const vs=enVoices();voiceObj=(state.voiceName&&vs.find(v=>v.name===state.voiceName))||vs.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;}
 if(canSpeak){pickVoice();try{speechSynthesis.onvoiceschanged=()=>{pickVoice();const a=document.activeElement;if(ui.sheet&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render();};}catch(e){}}
-function say(text,cut){if(!canSpeak||!state.voice)return;try{if(cut)speechSynthesis.cancel();
+function speak(text,cut){if(!canSpeak||!state.voice)return;try{if(cut)speechSynthesis.cancel();
   const parts=text.length>70?(text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text]):[text];
   parts.forEach(t=>{t=t.trim();if(!t)return;const u=new SpeechSynthesisUtterance(t);if(voiceObj)u.voice=voiceObj;u.lang=voiceObj?voiceObj.lang.replace("_","-"):"en-GB";u.rate=.96;u.pitch=1;speechSynthesis.speak(u);});}catch(e){}}
-function hush(){if(canSpeak)try{speechSynthesis.cancel();}catch(e){}}
+/* Recorded coach: natural voice clips in audio/, each named by a hash of its line. Falls back to the phone voice. */
+const CLIPS=new Set(/*CLIPS*/["19hbhva","sydl1b","jmjcem","7qrstd","18m2rze","4bv2h4","1x2we3d","fwyjdr","16m2ykf","19u21fd","15c19ie","1m5ckfw","5pg0dn","k7kssx","1a564fn","so7kcx","7l30t8","121edxy","17d3iyu","qf620t","hztkva","1bwow97","owlzo6","1ubssc7","1oeksot","l528lb","kf8oja","1wlbgwo","7h783g","12oiu5","ztbdqz","11ixffy","xkkqtw","qnfmiz","1csud2c","ln681m","1jasa14","xquthl","1q9rjlc","b620p","125q89k","1nzs6f0","12nf2mv","1jvjn6n","1fs2a7o","upc5vv","1rcrplg","8yjiv","a2mo12","1ww5mz1","1vuaoo7","10dzfd2","a7nmm0","1sg7l3d","1mb3q2w","abz7m3","9lbs6e","1qm448f","8k38f8","whm5pk","114tld9","zu8ssg","pq16lu","xrc8vv","p3j40s","ef9hgk","k3mwwc","h3gusd","15quqle","1tv2tar","15ydsxz","12qv42h","wqvb3e","1p4a3vl","1baycmx","x3pjmq","tx7r98","1qgxjkf","dky7kc","wbck4o","1pudnbc","wwxxvu","sp8zti","ffyzsj","kpd64z","1awl486","ur5d8k","986h2a","1wmq06k","108a1tc","n09hwv","18kr3t4","1133ic2","6ak3nt","rqkt84","1ktmpqk","8vi7yy","1xok6gi","3766yr","1wp2by2"]/*END*/);
+const SILENT="data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+const TIME1="And that's time. Well done.",TIME2="And that's time. Well done. Count them up and put your score in.",DONE="Session done. Great work. How did that feel?",SAMPLE="Great save, keeper. Thirty seconds left. Three. Two. One. Go!";
+let clipsOK=CLIPS.size>0,player=null,playing=false,queue=[],gen=0;const cache={};
+const useClips=()=>clipsOK&&!state.voiceName;
+function clipId(t){let h=5381;for(let i=0;i<t.length;i++)h=((h*33)^t.charCodeAt(i))>>>0;return h.toString(36);}
+function loadClip(t){const id=clipId(t);if(!clipsOK||!CLIPS.has(id))return Promise.resolve(null);if(!cache[id])cache[id]=fetch("audio/"+id+".mp3").then(r=>{if(!r.ok)throw 0;return r.blob();}).then(b=>URL.createObjectURL(b)).catch(()=>{clipsOK=false;return null;});return cache[id];}
+function nextClip(){const t=queue.shift();if(t==null){playing=false;return;}playing=true;const g=gen;
+  loadClip(t).then(u=>{if(g!==gen)return;if(!u){playing=false;speak(t);if(queue.length)nextClip();return;}
+    try{player.src=u;const p=player.play();if(p&&p.catch)p.catch(()=>{if(g===gen){playing=false;speak(t);}});}catch(e){playing=false;speak(t);}});}
+function prime(){if(!useClips()||!state.voice)return;try{if(!player){player=new Audio();player.preload="auto";player.onended=nextClip;player.onerror=nextClip;}
+  if(!playing){playing=true;player.src=SILENT;const p=player.play();if(p&&p.catch)p.catch(()=>{playing=false;});}}catch(e){playing=false;}}
+function say(text,cut){if(!state.voice)return;
+  if(useClips()&&player&&CLIPS.has(clipId(text))){if(cut){gen++;queue=[];try{player.pause();}catch(e){}playing=false;}queue.push(text);if(!playing)nextClip();return;}
+  speak(text,cut);}
+function preload(){const r=state.run;if(!r||!useClips()||r.phase==="reflect")return;const id=r.blocks[r.i],c=cuesFor(id,r.total||D[id].m*60,r.i);c.a.concat(c.e).forEach(q=>loadClip(q[1]));loadClip(D[id].met?TIME2:TIME1);}
+function hush(){gen++;queue=[];playing=false;if(player)try{player.pause();}catch(e){}if(canSpeak)try{speechSynthesis.cancel();}catch(e){}}
 const CHEER=["That's good work. Keep those hands ready.","You're looking sharp. Stay on your toes.","That's the way. Make every one count.","Nice and tidy. Don't rush it.","Brilliant, keeper. Keep going."];
 function rounds(first,work,rest,n,restLine){const a=[];let t=first;for(let i=1;i<=n;i++){a.push([t-6,(i===n?"Last round":"Round "+i)+". Get ready."],[t-3,"Three. Two. One. Go!"],[t+Math.round(work/2),CHEER[i%CHEER.length]]);if(i<n)a.push([t+work,restLine]);t+=work+rest;}return a;}
 function cuesFor(id,total,idx){
-  const d=D[id],nm=state.name?"Right, "+state.name+". ":"Right. ",intro=[0,nm+"Next up, "+d.n+". "+d.steps.join(" ")+" Off you go."];let a,soft=false;
+  const clip=useClips(),d=D[id],nm=state.name&&!clip?"Right, "+state.name+". ":"Right. ",intro=[0,nm+"Next up, "+d.n+". "+d.steps.join(" ")+" Off you go."];let a,soft=false;
   if(id==="wu")a=[[0,nm+"Let's get warm. Start with an easy jog for two minutes."],[60,"One more minute of jogging. Nice and relaxed."],[120,"High knees for ten metres, then walk back."],[150,"Now heel flicks."],[180,"Side shuffles, both directions. Stay low."],[210,"Leg swings, ten each leg, then big arm circles."],[240,"Grab your ball. Twenty gentle catches from your own throws, each one a little higher."]];
   else if(id==="cd")a=[[0,"Cool down. Walk slowly for a minute and let your breathing settle."],[60,"Hamstrings. Reach for your toes and hold."],[85,"Quad stretch, right leg. Hold."],[105,"Quad stretch, left leg."],[125,"Hip stretch. Lunge forward on your right leg."],[145,"Now the left leg."],[165,"Right arm across your chest. Hold."],[185,"Left arm across."],[205,"Stretch your wrists and fingers. They did the work today."],[225,"Shake it out and get a drink of water."]];
   else if(id==="f1")a=[intro,...rounds(30,30,30,4,"Rest. Remember your number of touches.")];
@@ -487,7 +504,7 @@ function cuesFor(id,total,idx){
       if(r<3){a.push([t-10,"Round "+r+" done. Thirty seconds rest. Breathe."]);t+=20;}}}
   else{soft=true;a=[intro,[Math.max(40,Math.round(total*.3)),CHEER[(id.charCodeAt(1)+idx)%CHEER.length]],[Math.round(total*.5),"That's halfway. Remember, "+d.cue.charAt(0).toLowerCase()+d.cue.slice(1)],[Math.round(total*.72),CHEER[(id.charCodeAt(1)+idx+2)%CHEER.length]]];}
   a=a.filter(q=>q[0]<total-(soft?70:6));
-  const e=(soft?[[60,"One minute to go. Keep the quality up."],[30,"Thirty seconds left. Finish strong."],[10,"Last ten seconds."]]:[]).concat([[5,"Five"],[4,"Four"],[3,"Three"],[2,"Two"],[1,"One"]]);
+  const e=(soft?[[60,"One minute to go. Keep the quality up."],[30,"Thirty seconds left. Finish strong."],[10,"Last ten seconds."]]:[]).concat(clip?[[5,"Five. Four. Three. Two. One."]]:[[5,"Five"],[4,"Four"],[3,"Three"],[2,"Two"],[1,"One"]]);
   return {a,e};
 }
 function coach(){const r=state.run;if(!r||r.phase==="reflect"||!r.endAt||!state.voice)return;
@@ -505,7 +522,7 @@ function clockText(s){return pad(Math.floor(s/60))+":"+pad(s%60);}
 let actx=null,beeped=false;
 function beep(){try{if(!actx)return;[0,.35,.7].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.25,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.25);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.26);});}catch(e){}}
 setInterval(()=>{const r=state.run,c=$("#clock");if(!r||r.phase==="reflect"||!c)return;const s=remaining();c.textContent=clockText(s);coach();
-  if(s<=0&&r.endAt){r.endAt=null;r.left=0;save();if(!beeped){beeped=true;beep();const dd=D[r.blocks[r.i]];say("And that's time. Well done."+(dd.met?" Count them up and put your score in.":""),true);}render();}},250);
+  if(s<=0&&r.endAt){r.endAt=null;r.left=0;save();if(!beeped){beeped=true;beep();const dd=D[r.blocks[r.i]];say(dd.met?TIME2:TIME1,true);}render();}},250);
 function setBlock(i){const r=state.run;r.i=i;r.left=D[r.blocks[i]].m*60;r.total=r.left;r.fired={};r.endAt=null;beeped=false;hush();}
 function startRun(kind,blocks,meta){state.run=Object.assign({kind,blocks,i:0,scores:{},left:0,endAt:null,phase:"drill",conf:0,note:"",t0:Date.now()},meta||{});setBlock(0);save();}
 
@@ -530,8 +547,8 @@ document.addEventListener("click",e=>{
   if(!["add-match","mk-backup","restore","mrate"].includes(act))ui.msg="";
   switch(act){
     case "settings":ui.sheet=!ui.sheet;scroll=true;break;
-    case "test-voice":say("Great save, keeper. Thirty seconds left. Three. Two. One. Go!",true);return;
-    case "voice":state.voice=!state.voice;save();if(state.voice)say("Voice coach on.",true);else hush();break;
+    case "test-voice":{const was=state.voice;state.voice=true;prime();say(SAMPLE,true);state.voice=was;}return;
+    case "voice":state.voice=!state.voice;save();if(state.voice){prime();say("Voice coach on.",true);}else hush();break;
     case "solo":state.partner=false;save();break;
     case "partner":state.partner=true;save();break;
     case "plan-prev":state.planIdx=Math.max(0,state.planIdx-1);save();break;
@@ -542,13 +559,13 @@ document.addEventListener("click",e=>{
     case "close-drill":ui.drill=null;break;
     case "start-free":startRun("free",[el.dataset.id],{title:D[el.dataset.id].n,mins:D[el.dataset.id].m});scroll=true;break;
     case "toggle":if(!r)break;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume();}catch(x){}
-      if(r.endAt){r.left=remaining();r.endAt=null;hush();awake(false);}else if(r.left>0){const resumed=(r.total||0)>r.left;r.endAt=Date.now()+r.left*1000;beeped=false;awake(true);if(resumed)say("Go.");coach();}save();break;
+      if(r.endAt){r.left=remaining();r.endAt=null;hush();awake(false);}else if(r.left>0){const resumed=(r.total||0)>r.left;r.endAt=Date.now()+r.left*1000;beeped=false;awake(true);prime();preload();if(resumed)say("Go.");coach();}save();break;
     case "plus":if(!r)break;if(r.endAt)r.endAt+=60000;else r.left+=60;r.total=(r.total||0)+60;if(r.fired)Object.keys(r.fired).forEach(k=>{if(k[0]==="e")delete r.fired[k];});beeped=false;save();break;
     case "inc":case "dec":{if(!r)break;const id=r.blocks[r.i],m=D[id].met;let v=(r.scores[id]==null?0:r.scores[id])+(act==="inc"?1:-1);v=Math.max(0,v);if(m.t==="of")v=Math.min(m.n,v);r.scores[id]=Math.round(v*10)/10;save();const inp=$("#score");if(inp)inp.value=r.scores[id];return;}
     case "next-block":if(!r)break;
       if(r.i<r.blocks.length-1){setBlock(r.i+1);save();}
       else if(r.kind==="free"){const d=today();logScores(r,d);state.days[d]=1;state.run=null;hush();awake(false);save();}
-      else{r.phase="reflect";r.endAt=null;hush();awake(false);say("Session done. Great work"+(state.name?", "+state.name:"")+". How did that feel?");save();}
+      else{r.phase="reflect";r.endAt=null;hush();awake(false);say(useClips()||!state.name?DONE:"Session done. Great work, "+state.name+". How did that feel?");save();}
       scroll=true;break;
     case "back-block":if(!r)break;if(r.phase==="reflect"){r.phase="drill";}else if(r.i>0)setBlock(r.i-1);save();scroll=true;break;
     case "conf":if(r){r.conf=+el.dataset.n;save();}break;
