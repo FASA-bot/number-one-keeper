@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Number One">
+<meta name="theme-color" content="#0e3a2b">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Number One Keeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: a floodlit pitch seen from above. Chalk lines on mown turf, one keeper-kit orange. */
+  --pitch:#0e3a2b;
+  --stripe:#104030;
+  --turf:#17503d;
+  --turf-hi:#1e6049;
+  --chalk:#f3f6ee;
+  --mute:#a8c4b5;
+  --line:rgba(243,246,238,.2);
+  --kit:#ff6f1f;
+  --kit-ink:#1c0f04;
+  --card:#ffd43b;
+  --good:#86e39a;
+  --bad:#ff8d85;
+  --display:"Big Shoulders Display","Arial Narrow","Impact",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--pitch);color:var(--chalk);font:400 16px/1.45 var(--body);
+  background-image:repeating-linear-gradient(180deg,var(--pitch) 0 72px,var(--stripe) 72px 144px);overscroll-behavior:none}
+.app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));border-bottom:1px solid var(--line);background:var(--pitch)}
+.mark{white-space:nowrap;font:900 23px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.mark b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--kit);color:var(--kit-ink);font-size:20px}
+.kick{margin-left:auto;white-space:nowrap;font-size:13px;color:var(--mute);text-align:right;line-height:1.2}
+.kick strong{display:block;color:var(--chalk);font:700 20px/1 var(--display);letter-spacing:.03em}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px max(16px,env(safe-area-inset-right)) 28px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:16px}
+main>*{flex-shrink:0}
+nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--pitch);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 8px;color:var(--mute);text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.03em}
+nav a svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav a[aria-current="page"]{color:var(--kit)}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance;line-height:1}
+h1{font-size:44px;font-weight:900}
+h2{font-size:24px;font-weight:700}
+h3{font-size:19px;font-weight:700}
+p{margin:0}
+.mute{color:var(--mute)}
+.small{font-size:14px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--card)}
+.panel{background:var(--turf);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.hero{position:relative;overflow:hidden;border:2px solid var(--chalk);border-radius:6px;padding:20px 18px 18px;background:var(--turf);display:flex;flex-direction:column;gap:10px}
+.hero svg.box{position:absolute;inset:0;width:100%;height:100%;opacity:.2;pointer-events:none}
+.hero>*:not(svg){position:relative}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.btn{appearance:none;border:0;border-radius:10px;min-height:48px;padding:0 18px;font:700 20px/1 var(--display);letter-spacing:.05em;text-transform:uppercase;background:var(--kit);color:var(--kit-ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.wide{width:100%}
+.btn.ghost{background:transparent;color:var(--chalk);border:1.5px solid var(--line)}
+.btn.sm{min-height:40px;font-size:16px;padding:0 12px}
+.btn:active{transform:translateY(1px)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--card);outline-offset:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}
+.chip.on{background:var(--chalk);color:var(--pitch);border-color:var(--chalk)}
+.chip.kit{border-color:var(--kit);color:var(--kit)}
+button.chip{appearance:none;background:none;font-family:var(--body);cursor:pointer;min-height:34px}
+button.chip.on{background:var(--chalk)}
+.blocks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.blocks li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.blocks li:first-child{border-top:0}
+.blocks .n{font:700 20px/1 var(--display);color:var(--mute)}
+.blocks .t{font-weight:600}
+.blocks .m{font-variant-numeric:tabular-nums;color:var(--mute);font-size:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{appearance:none;border:0;background:none;color:var(--mute);font:600 15px var(--body);min-height:42px;cursor:pointer}
+.seg button.on{background:var(--chalk);color:var(--pitch)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.days div{font-size:12px;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:4px}
+.days i{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:block}
+.days .done i{background:var(--kit);border-color:var(--kit)}
+.days .now{color:var(--chalk);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--turf);border:1px solid var(--line);border-radius:12px;padding:12px 10px}
+.tile b{display:block;font:900 34px/1 var(--display);font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--mute);line-height:1.2;display:block;margin-top:4px}
+.dlist{display:flex;flex-direction:column;gap:8px}
+.ditem{appearance:none;text-align:left;width:100%;background:var(--turf);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--chalk);font:inherit;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.ditem .t{font-weight:600;font-size:17px}
+.ditem .s{grid-column:1/-1;font-size:13px;color:var(--mute)}
+.ditem .v{font:700 20px/1 var(--display);color:var(--card);font-variant-numeric:tabular-nums}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.diagram{background:var(--pitch);border:1px solid var(--line);border-radius:10px;width:100%;display:block}
+.diagram .ln{fill:none;stroke:var(--chalk);stroke-width:1.5;opacity:.6}
+.diagram .faint{fill:none;stroke:var(--chalk);stroke-width:1;opacity:.25;stroke-dasharray:3 4}
+.diagram .mv{fill:none;stroke:var(--card);stroke-width:2;stroke-dasharray:5 4}
+.diagram .bl{fill:none;stroke:var(--chalk);stroke-width:2}
+.diagram .kp{fill:var(--kit)}
+.diagram .pl{fill:none;stroke:var(--chalk);stroke-width:2}
+.diagram .ball{fill:var(--chalk)}
+.diagram .cone{fill:var(--card)}
+.diagram .wall{fill:var(--mute)}
+.diagram text{fill:var(--mute);font:600 10px var(--body)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+ol.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.cue{border-left:3px solid var(--kit);padding:2px 0 2px 12px;font-weight:500}
+.clock{font:900 84px/1 var(--display);font-variant-numeric:tabular-nums;text-align:center;letter-spacing:.02em}
+.clock.done{color:var(--card)}
+.prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--kit)}
+.stepper{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;align-items:center}
+.stepper button{appearance:none;border:1.5px solid var(--line);background:none;color:var(--chalk);border-radius:10px;height:52px;font:700 28px/1 var(--display);cursor:pointer}
+input,textarea,select{font:500 17px var(--body);color:var(--chalk);background:var(--pitch);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;min-height:48px}
+textarea{min-height:76px;resize:vertical}
+.stepper input{text-align:center;font:900 30px/1 var(--display);height:52px;padding:0}
+label{font-size:13px;font-weight:600;color:var(--mute);display:flex;flex-direction:column;gap:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rate{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.rate button{appearance:none;border:1.5px solid var(--line);background:none;color:var(--chalk);border-radius:10px;height:52px;font:900 26px/1 var(--display);cursor:pointer}
+.rate button.on{background:var(--kit);border-color:var(--kit);color:var(--kit-ink)}
+.bar{display:grid;grid-template-columns:104px 1fr 44px;gap:10px;align-items:center;font-size:14px}
+.bar .track{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar .track i{display:block;height:100%;background:var(--kit);border-radius:5px}
+.bar .pc{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar.none .pc{color:var(--mute);font-weight:400}
+.hist{display:grid;grid-template-columns:1fr 84px auto;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.hist:first-of-type{border-top:0}
+.hist .v{font:700 20px/1 var(--display);font-variant-numeric:tabular-nums;text-align:right}
+.hist .v small{display:block;font:500 11px var(--body);color:var(--mute);margin-top:3px}
+.spark{width:84px;height:30px;display:block}
+.match{border-top:1px dashed var(--line);padding:12px 0;display:grid;grid-template-columns:1fr auto;gap:4px 10px}
+.match:first-of-type{border-top:0}
+.match .big{font:900 28px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--card);text-align:right}
+.match .meta{grid-column:1/-1;font-size:13px;color:var(--mute)}
+.vids{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
+.vid{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--chalk);text-decoration:none;font-size:15px;line-height:1.3}
+.vid .play{width:44px;height:44px;border-radius:50%;background:var(--kit);position:relative}
+.vid .play::after{content:"";position:absolute;left:17px;top:13px;border-left:14px solid var(--kit-ink);border-top:9px solid transparent;border-bottom:9px solid transparent}
+.more{color:var(--mute);font-size:14px;padding:6px 0;min-height:32px}
+.linkbtn{appearance:none;background:none;border:0;color:var(--mute);font:500 13px var(--body);text-decoration:underline;cursor:pointer;padding:6px 0;min-height:32px}
+.gear{appearance:none;background:none;border:1.5px solid var(--line);color:var(--chalk);width:40px;height:40px;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.gear svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.note{font-size:14px;color:var(--mute);border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+.ok{color:var(--good)}.warn{color:var(--bad)}
+.empty{text-align:center;color:var(--mute);padding:18px 8px;font-size:15px}
+@media (prefers-reduced-motion:no-preference){.hero h1{animation:rise .5s ease-out both}@keyframes rise{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="mark"><b>1</b>Number One</div>
+    <div class="kick" id="kick"></div>
+    <button class="gear" data-act="settings" aria-label="Settings" id="gear"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg></button>
+  </header>
+  <main id="main"></main>
+  <nav id="nav">
+    <a href="#today" data-v="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg>Today</a>
+    <a href="#drills" data-v="drills"><svg viewBox="0 0 24 24"><path d="M12 3l5.5 15h-11zM4 21h16M9 12h6"/></svg>Drills</a>
+    <a href="#matches" data-v="matches"><svg viewBox="0 0 24 24"><path d="M3 19V6h18v13M3 10h18M8 6v13M13 6v13M18 6v13"/></svg>Matches</a>
+    <a href="#progress" data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg>Progress</a>
+  </nav>
+</div>
+<script>
+"use strict";
+/* ---------- Drill library ---------- */
+const AREAS={h:"Handling",f:"Footwork",d:"Diving",r:"Reactions",c:"Crosses",p:"Distribution",v:"1v1s",s:"Shot-stopping",a:"Agility",k:"Conditioning"};
+const D={
+wu:{n:"Dynamic warm-up",a:"w",m:5,kit:"A ball",who:"solo",dg:"",steps:["Jog two minutes, then high knees, heel flicks and side shuffles across 10 metres.","Leg swings and arm circles, 10 each side.","Finish with 20 gentle catches from your own throws, getting higher each time."],cue:"Arrive at the first drill warm, with hands that have already felt the ball."},
+cd:{n:"Cool down and stretch",a:"w",m:4,kit:"None",who:"solo",dg:"",steps:["Walk for a minute and let your breathing settle.","Hold each stretch 20 seconds: hamstrings, quads, hips, shoulders, wrists.","Drink some water."],cue:"Slow down properly. Tomorrow's legs depend on it."},
+h1:{n:"Wall W-catch",a:"h",m:5,kit:"Ball, wall",who:"solo",dg:"wall",steps:["Stand 3 to 5 metres from a wall in your set position.","Throw at chest to head height and catch the rebound with thumbs together in a W.","Bring every catch into your chest before the next throw."],cue:"Hands out in front, watch the ball all the way into your gloves.",met:{t:"of",n:20,l:"clean catches"}},
+h2:{n:"Scoop and cup",a:"h",m:5,kit:"Ball, wall",who:"solo",dg:"wall",steps:["Throw low at the wall so the ball comes back along the ground or at shin height.","Get your body behind it. Little fingers together, scoop it up into your chest.","Alternate: one rolling ball, one bouncing at stomach height that you cup."],cue:"Second barrier every time: legs or body behind your hands.",met:{t:"of",n:20,l:"clean takes"}},
+h3:{n:"Volley hands",a:"h",m:6,kit:"Ball, partner",who:"partner",alt:["h1","h2"],dg:"serve",steps:["Your partner volleys from their hands at you from 8 metres.","Mix the height: chest, head, just above your head.","Catch, hold for a second, roll it back."],cue:"Soft elbows. Let your arms give a little as the ball arrives.",met:{t:"of",n:15,l:"clean catches"}},
+f1:{n:"Post to post shuffles",a:"f",m:4,kit:"2 cones",who:"solo",dg:"shuffle",steps:["Place two cones 4 metres apart.","Shuffle between them without crossing your feet and touch each cone.","Work 30 seconds, rest 30 seconds. Count your best round."],cue:"Stay low, on the balls of your feet, hands ready the whole way.",met:{t:"count",l:"cone touches in 30 seconds"}},
+f2:{n:"Cone weave to set",a:"f",m:5,kit:"5 cones, ball",who:"solo",dg:"weave",steps:["Line up five cones a stride apart.","Quick feet through the cones, then stop dead in your set position.","Throw the ball up as you set and catch it clean. That is one rep."],cue:"Feet still before the ball is struck. Moving keepers get beaten.",met:{t:"of",n:10,l:"clean reps"}},
+f3:{n:"Arc steps",a:"f",m:5,kit:"3 cones, goal",who:"solo",dg:"arc",steps:["Put three cones out at the edge of the box: left, centre, right.","Call a cone, move along your arc so you are on the line between that cone and the middle of the goal.","Set, then check: can you touch your near post in two steps?"],cue:"Cover the near post first, then come out as far as you can still protect the far one.",met:{t:"of",n:10,l:"good positions"}},
+d1:{n:"Kneeling collapse dive",a:"d",m:5,kit:"Ball, soft ground",who:"solo",dg:"dive",steps:["Kneel with a ball placed an arm's length to each side.","Fall sideways onto your hip and shoulder and take the ball with both hands.","One hand behind the ball, one on top, ball as the third hand on the ground."],cue:"Land on your side, never your elbow or your stomach.",met:{t:"of",n:20,l:"clean holds"}},
+d2:{n:"Low dive from set",a:"d",m:6,kit:"2 balls, soft ground",who:"solo",dg:"dive",steps:["Start in your set position with a ball two steps to each side.","Take a short step toward the ball, push off that leg and dive low.","Attack the ball: hands lead, body follows. Get up fast, go the other side."],cue:"Step forward and across. Diving backwards opens the goal.",met:{t:"of",n:12,l:"clean dives"}},
+d3:{n:"Step and dive",a:"d",m:6,kit:"Ball, partner, goal",who:"partner",alt:["d2","d1"],dg:"serve",steps:["Your partner serves from 8 metres, underarm first, then side-foot.","Balls go to either side at knee to waist height.","Hold it if you can. If not, push it wide of the post."],cue:"Top hand comes over to trap the ball. No spills into the middle.",met:{t:"of",n:12,l:"saves held or pushed wide"}},
+d4:{n:"Double save recovery",a:"d",m:6,kit:"2 balls, partner",who:"partner",alt:["a2","d2"],dg:"serve",steps:["Save a low ball to one side.","Get up without using your hands behind you and reset.","Your partner plays a second ball to the other side straight away."],cue:"Roll forward onto your knee and push up. The second save wins matches.",met:{t:"of",n:8,l:"double saves"}},
+r1:{n:"Tennis ball one hand",a:"r",m:5,kit:"Tennis ball, wall",who:"solo",dg:"wall",steps:["Stand 2 to 3 metres from the wall with a tennis ball.","Throw with one hand, catch with the other. No glove.","Step closer every ten catches."],cue:"Eyes level and still. Move your hands, not your head.",met:{t:"of",n:30,l:"clean catches"}},
+r2:{n:"Drop ball",a:"r",m:4,kit:"2 tennis balls, partner",who:"partner",alt:["r1","a2"],dg:"",steps:["Your partner holds a tennis ball in each hand at shoulder height.","Stand a step away in your set position.","They drop one without warning. Catch it before the second bounce."],cue:"Weight forward on your toes so the first move is quick.",met:{t:"of",n:10,l:"caught"}},
+r3:{n:"Close range parry",a:"r",m:5,kit:"Ball, partner",who:"partner",alt:["a2","r1"],dg:"serve",steps:["Your partner volleys firmly from 5 metres, anywhere within reach.","Do not try to catch. Parry with strong open palms.","Aim every parry wide, away from the middle of the goal."],cue:"Strong wrists, fingers spread. Decide where the ball goes.",met:{t:"of",n:12,l:"parried wide"}},
+c1:{n:"High point catch",a:"c",m:5,kit:"Ball",who:"solo",dg:"high",steps:["Throw the ball high above you.","Take two steps, drive one knee up and jump off the other leg.","Catch at the very top of your jump and shout \"Keeper's!\" as you go."],cue:"Take it early and high. The loud call is part of the save.",met:{t:"of",n:15,l:"caught at full stretch"}},
+c2:{n:"Claim from wide",a:"c",m:7,kit:"Ball, partner, goal",who:"partner",alt:["c1","c3"],dg:"cross",steps:["Start on your line, side on, facing the wing.","Your partner throws or crosses from wide toward the six-yard line.","Decide early: come and claim, or stay. If you come, call and catch at the top."],cue:"Wait, read the flight, then go hard. Late and fast beats early and stuck.",met:{t:"of",n:10,l:"crosses claimed"}},
+c3:{n:"Punch for distance",a:"c",m:4,kit:"Ball, 1 cone",who:"solo",dg:"high",steps:["Put a cone 8 metres in front of you.","Throw the ball up and punch it with both fists together.","Go for height and distance. It counts if it lands past the cone."],cue:"Punch through the bottom half of the ball with locked wrists.",met:{t:"of",n:10,l:"past the cone"}},
+p1:{n:"Wall target passing",a:"p",m:5,kit:"Ball, wall, chalk or tape",who:"solo",dg:"wall",steps:["Mark a one-metre target low on the wall.","Pass from 8 metres with the inside of your foot and control the rebound.","Ten with your right foot, ten with your left."],cue:"Two touches: one to set it out of your feet, one to pass.",met:{t:"of",n:20,l:"on target"}},
+p2:{n:"Driven pass through the gate",a:"p",m:6,kit:"Ball, 2 cones",who:"solo",dg:"target",steps:["Make a gate four metres wide, 25 metres away.","Strike a driven pass off the ground through the gate.","Move the gate left and right so you hit both full-back positions."],cue:"Plant foot beside the ball, lock your ankle, follow through at the target.",met:{t:"of",n:10,l:"through the gate"}},
+p3:{n:"Overarm throw to target",a:"p",m:5,kit:"Ball, 2 cones",who:"solo",dg:"target",steps:["Make a gate three metres wide, 20 metres away.","Side on, straight arm, bowl the ball over the top.","It should arrive flat and easy to control."],cue:"Point your front hand at the target and step toward it.",met:{t:"of",n:10,l:"through the gate"}},
+p4:{n:"Side volley to zone",a:"p",m:5,kit:"Ball, 4 cones",who:"solo",dg:"target",steps:["Mark a 10 metre square zone about 30 metres away.","Drop the ball from waist height and strike it side on before it lands.","Keep it low and fast, landing in the zone."],cue:"Drop the ball, do not throw it up. Lean away and swing across your body.",met:{t:"of",n:10,l:"landed in the zone"}},
+p5:{n:"Back pass and switch",a:"p",m:5,kit:"Ball, wall, 2 cones",who:"solo",dg:"wall",steps:["Pass against the wall. That rebound is your back pass.","Open your body and take your first touch away from the side it came from.","Play your second touch past the cone on the other side."],cue:"Scan over your shoulder before the ball arrives.",met:{t:"of",n:20,l:"clean switches"}},
+v1:{n:"Smother at feet",a:"v",m:6,kit:"Ball, partner, soft ground",who:"partner",alt:["v2","d2"],dg:"onev",steps:["Your partner dribbles at you from 12 metres at half speed.","Close the gap while the ball is out of their feet, then get set.","When they take a heavy touch, go down across the ball, hands first."],cue:"Hands and head behind the ball. Stay big for as long as you can.",met:{t:"of",n:8,l:"won or blocked"}},
+v2:{n:"Close down and set",a:"v",m:5,kit:"3 cones",who:"solo",dg:"onev",steps:["Start on your line with a cone 5 metres out as the attacker.","Sprint out, then brake into a low block shape two metres from the cone.","Hold the shape for two seconds: wide knees, hands low, chest up."],cue:"Fast, then still. Never be moving forward when the shot comes.",met:{t:"of",n:10,l:"balanced stops"}},
+s1:{n:"Angle shots",a:"s",m:8,kit:"Ball, partner, goal",who:"partner",alt:["f3","f1"],dg:"angles",steps:["Your partner shoots from three spots: left, centre and right of the box.","Move along your arc and set before every strike.","Five shots from each spot."],cue:"Near post is yours. Make them beat you at the far side.",met:{t:"of",n:15,l:"saves"}},
+a1:{n:"Keeper T-run",a:"a",m:5,kit:"4 cones, stopwatch",who:"solo",dg:"trun",steps:["Set a T: 5 metres forward, then 3 metres to each side.","Sprint forward, shuffle left, shuffle all the way right, shuffle back to the middle, backpedal home.","Three timed runs with a full minute of rest between. Log your fastest."],cue:"Low hips on the shuffles. Do not cross your feet.",met:{t:"time",l:"seconds, fastest run"}},
+a2:{n:"Ground-up reaction",a:"a",m:4,kit:"Ball",who:"solo",dg:"high",steps:["Lie on your front with the ball in your hands.","Throw it up, get to your feet, set, and catch it before it bounces twice.","Work 40 seconds, rest 40. Count your best round."],cue:"Push up through your hands and get a foot under you quickly.",met:{t:"count",l:"catches in 40 seconds"}},
+k1:{n:"Keeper circuit",a:"k",m:8,kit:"None",who:"solo",dg:"circuit",steps:["Body weight only. Do each station for 20 seconds, then rest 10.","1 squat jumps, 2 plank, 3 side-to-side bounds, 4 press-ups.","Three rounds, with 30 seconds of rest between rounds."],cue:"Good form beats more reps. Stop a round if your form goes.",met:{t:"of",n:3,l:"rounds completed"}},
+k2:{n:"Stick the landing",a:"k",m:4,kit:"None",who:"solo",dg:"",steps:["Hop sideways off one leg and land on the other.","Freeze for two seconds: knee bent, knee over toes, no wobble.","Ten landings on each leg."],cue:"Land quietly. Soft landings protect your knees.",met:{t:"of",n:20,l:"landings held"}}
+};
+const WEEKS=[
+ ["Hands and set position",[["h1","f1","h2"],["f2","h3","d1"],["h1","f3","k2"]]],
+ ["Low diving",[["d1","d2","h2"],["f1","d3","a2"],["d2","h1","k1"]]],
+ ["Footwork and angles",[["f2","f3","h1"],["a1","s1","f1"],["f3","d2","k2"]]],
+ ["Reactions",[["r1","a2","h2"],["r2","r3","d3"],["r1","f2","k1"]]],
+ ["Crosses",[["c1","c3","f1"],["c2","c1","p3"],["c3","h3","k2"]]],
+ ["Distribution",[["p1","p5","p3"],["p2","p4","f2"],["p5","p1","c1"]]],
+ ["1v1s",[["v2","d2","r1"],["v1","d4","s1"],["v2","a1","k1"]]],
+ ["Match sharp",[["h1","d3","p5"],["s1","c2","p2"],["r1","f3","p3"]]]
+];
+const TOTAL=WEEKS.length*3;
+/* YouTube reference videos: [video id, label]. Other people's videos, linked not embedded. */
+const VID={
+h1:["PY1oJFuM5qU","Catching basics: set position, W catch, scoop"],
+h2:["RZUbeLcwLNA","The scoop technique"],
+h3:["35lSiGALVyE","Improving your handling against shots"],
+f1:["kdyg5mVHmnc","Five solo footwork drills"],
+f2:["lshxX3S9ShU","Seven footwork drills to practise at home"],
+f3:["RVSEYzcGaic","How to position correctly"],
+d1:["RQs288r3tbY","Dive and grasp from a kneeling position"],
+d2:["zd5lTYx0-QE","How to dive low, for beginners"],
+d3:["8JcN2PXnDqM","Four diving techniques every keeper needs"],
+d4:["h-FVphdMfwI","Recovery saves and getting up quickly"],
+r1:["vCEkBvnwrOY","Quick solo reaction training for beginners"],
+r2:["KJyQbs5QSeo","Tennis ball reaction training"],
+r3:["hJkSJ9rUcTc","Reaction training, full session"],
+c1:["aIiGwX-KyL0","How to catch crosses"],
+c2:["Ix1wFBbs1as","How to deal with crosses"],
+c3:["SKRwuqXW2pQ","Punching drill"],
+p1:["B37VY1WPRwY","Distribution techniques explained"],
+p2:["Y_Oll67U9IQ","Complete distribution tutorial: kicking, throwing, side volleys"],
+p3:["SJ7IsYgCxdo","Overarm throw distribution"],
+p4:["wEzZ6L5XqsE","The side volley technique"],
+p5:["J7t6YSYWfjQ","Dealing with the pass back"],
+v1:["78rjtpWibK4","1v1 block saves and smothers"],
+v2:["s71gs_8qS4g","How to approach and save a 1v1"],
+s1:["NULietFRmsY","Positioning and angles explained"],
+a2:["qEX3E8Xq-_s","Getting up fast after a save"],
+k2:["FIUkg0WKqVw","Jumping power and landing technique, no gym"]
+};
+const VQ={wu:"goalkeeper dynamic warm up routine",cd:"football cool down stretches",a1:"goalkeeper agility T drill",k1:"bodyweight circuit for young footballers"};
+function videoRow(id){const v=VID[id],q=encodeURIComponent(VQ[id]||("goalkeeper "+D[id].n+" drill"));
+  return `<div class="vids">${v?`<a class="vid" href="https://www.youtube.com/watch?v=${v[0]}" target="_blank" rel="noopener"><span class="play" aria-hidden="true"></span><span><strong>Watch on YouTube</strong><br>${esc(v[1])}</span></a>`:""}<a class="more" href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">${v?"More videos like this":"Find videos for this on YouTube"}</a></div>`;}
+
+/* ---------- State ---------- */
+const KEY="number-one-keeper-v1";
+const fresh=()=>({name:"",goal:3,partner:false,voice:true,kickoff:"",planIdx:0,sessions:[],scores:{},days:{},matches:[],run:null});
+let state=fresh();
+let saveOK=true;
+try{const raw=localStorage.getItem(KEY);if(raw)state=Object.assign(fresh(),JSON.parse(raw));}catch(e){saveOK=false;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));saveOK=true;}catch(e){saveOK=false;}}
+const ui={filter:"all",drill:null,sheet:false,quit:false,msg:"",mrate:0};
+
+/* ---------- Helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse=s=>{const p=s.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const today=()=>ymd(new Date());
+const nice=s=>parse(s).toLocaleDateString("en-IE",{day:"numeric",month:"short"});
+function weekKey(s){const d=parse(s);const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return ymd(d);}
+function shift(s,n){const d=parse(s);d.setDate(d.getDate()+n);return ymd(d);}
+function weekCount(wk){let n=0;for(let i=0;i<7;i++)if(state.days[shift(wk,i)])n++;return n;}
+function streak(){let wk=weekKey(today()),n=0;if(weekCount(wk)<state.goal)wk=shift(wk,-7);while(weekCount(wk)>=state.goal&&n<520){n++;wk=shift(wk,-7);}return n;}
+function kickoff(){if(state.kickoff)return state.kickoff;const d=new Date();return (d.getFullYear()+1)+"-01-01";}
+function daysTo(){return Math.round((parse(kickoff())-parse(today()))/864e5);}
+function best(id){const a=state.scores[id]||[];if(!a.length)return null;const v=a.map(x=>x.v);return D[id].met.t==="time"?Math.min(...v):Math.max(...v);}
+function last(id){const a=state.scores[id]||[];return a.length?a[a.length-1].v:null;}
+function metText(m){return m.t==="of"?m.l+", out of "+m.n:m.l;}
+function showScore(id,v){const m=D[id].met;return m.t==="of"?v+"/"+m.n:m.t==="time"?v+"s":String(v);}
+function sessionAt(idx){const i=((idx%TOTAL)+TOTAL)%TOTAL,w=Math.floor(i/3),s=i%3;const out=[];
+  WEEKS[w][1][s].forEach(id=>{let pick=id;if(!state.partner&&D[id].who==="partner"){pick=(D[id].alt||[]).find(a=>!out.includes(a)&&!WEEKS[w][1][s].includes(a))||(D[id].alt||[]).find(a=>!out.includes(a));}
+    if(pick&&!out.includes(pick))out.push(pick);});
+  const blocks=["wu",...out,"cd"];
+  return {i,week:w+1,letter:"ABC"[s],theme:WEEKS[w][0],blocks,mins:blocks.reduce((t,b)=>t+D[b].m,0)};}
+function areaPct(a){const ids=Object.keys(D).filter(id=>D[id].a===a&&D[id].met&&D[id].met.t==="of"&&last(id)!=null);
+  if(!ids.length)return null;return Math.round(100*ids.reduce((t,id)=>t+last(id)/D[id].met.n,0)/ids.length);}
+
+/* ---------- Diagrams ---------- */
+function diagram(kind){
+  if(!kind)return "";
+  const kp=(x,y)=>`<circle cx="${x}" cy="${y}" r="7" class="kp"/>`,pl=(x,y)=>`<circle cx="${x}" cy="${y}" r="6.5" class="pl"/>`,
+    ball=(x,y)=>`<circle cx="${x}" cy="${y}" r="4" class="ball"/>`,cone=(x,y)=>`<path d="M${x} ${y-7}l6 12h-12z" class="cone"/>`,
+    mv=d=>`<path d="${d}" class="mv" marker-end="url(#ah)"/>`,bl=d=>`<path d="${d}" class="bl" marker-end="url(#aw)"/>`,
+    goal=`<path d="M20 22h260M110 22v-12h80v12M70 22v34h160v-34" class="ln"/>`;
+  const T={
+   wall:`<rect x="50" y="12" width="200" height="9" rx="2" class="wall"/><text x="258" y="20">wall</text>${kp(150,122)}${bl("M144 112L132 28")}${bl("M160 26L156 108")}<text x="172" y="72">3 to 5 m</text>`,
+   dive:`${goal}${kp(150,46)}${ball(88,52)}${ball(212,52)}${mv("M140 48L98 52")}${mv("M160 48L202 52")}<text x="112" y="80">dive low, both sides</text>`,
+   shuffle:`${goal}${cone(100,44)}${cone(200,44)}${kp(150,44)}${mv("M140 60L106 60")}${mv("M160 60L194 60")}<text x="128" y="82">4 m apart</text>`,
+   weave:`${cone(70,75)}${cone(110,75)}${cone(150,75)}${cone(190,75)}${cone(230,75)}${kp(30,75)}${mv("M42 75Q56 50 90 75T130 75T170 75T210 75T258 70")}<text x="246" y="92">set</text>`,
+   arc:`${goal}<path d="M92 40Q150 86 208 40" class="mv"/>${kp(150,62)}${cone(50,134)}${cone(150,140)}${cone(250,134)}<path d="M50 128L150 22M250 128L150 22M150 132L150 22" class="faint"/><text x="100" y="104">stay on the line to goal centre</text>`,
+   serve:`${goal}${kp(150,40)}${pl(150,128)}${ball(160,120)}${bl("M158 114L176 52")}${bl("M142 116L124 52")}<text x="170" y="134">partner</text>`,
+   high:`${kp(150,124)}${ball(150,28)}${mv("M150 112L150 42")}<text x="164" y="34">catch at the top</text>`,
+   cross:`${goal}${kp(150,30)}${pl(272,110)}${bl("M266 104Q236 30 178 52")}${mv("M156 34L172 48")}<text x="232" y="128">wide server</text>`,
+   target:`${cone(128,26)}${cone(172,26)}${kp(150,128)}${bl("M150 116L150 34")}<text x="182" y="30">gate</text><text x="164" y="80">20 to 30 m</text>`,
+   onev:`${goal}${kp(150,34)}${mv("M150 44L150 76")}${cone(150,112)}<text x="164" y="116">attacker</text><text x="164" y="70">sprint, then set</text>`,
+   angles:`${goal}<path d="M92 40Q150 86 208 40" class="mv"/>${kp(150,62)}${pl(50,128)}${pl(150,136)}${pl(250,128)}<path d="M54 122L110 22M54 122L190 22M246 122L110 22M246 122L190 22" class="faint"/>`,
+   trun:`${cone(150,132)}${cone(150,52)}${cone(80,52)}${cone(220,52)}${kp(150,118)}${mv("M150 108L150 66")}${mv("M140 40L92 40")}${mv("M160 30L208 30")}<text x="162" y="94">5 m</text><text x="104" y="68">3 m</text>`,
+   circuit:[["1 squat jumps",30,30],["2 plank",170,30],["3 side bounds",30,90],["4 press-ups",170,90]].map(s=>`<rect x="${s[1]}" y="${s[2]}" width="100" height="36" rx="6" class="ln"/><text x="${s[1]+10}" y="${s[2]+22}">${s[0]}</text>`).join("")
+  };
+  return `<svg class="diagram" viewBox="0 0 300 150" role="img" aria-label="Drill layout seen from above"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ffd43b"/></marker><marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f3f6ee"/></marker></defs>${T[kind]||""}</svg>
+  <div class="legend"><span><i style="background:var(--kit)"></i>You</span><span><i style="background:var(--chalk)"></i>Ball path</span><span><i style="background:var(--card)"></i>Your movement, cones</span></div>`;
+}
+function spark(vals,lowerBetter){
+  if(vals.length<2)return `<svg class="spark" viewBox="0 0 84 30"><circle cx="78" cy="15" r="3" fill="var(--kit)"/></svg>`;
+  const mn=Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1;
+  const pts=vals.map((v,i)=>[4+i*(74/(vals.length-1)),4+22*(lowerBetter?(v-mn)/r:1-(v-mn)/r)]);
+  const line=pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  return `<svg class="spark" viewBox="0 0 84 30"><polygon points="4,29 ${line} 78,29" fill="var(--kit)" opacity=".18"/><polyline points="${line}" fill="none" stroke="var(--kit)" stroke-width="2" stroke-linejoin="round"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="3" fill="var(--chalk)"/></svg>`;
+}
+
+/* ---------- Views ---------- */
+function view(){const h=(location.hash||"").slice(1);return ["today","drills","matches","progress"].includes(h)?h:"today";}
+function weekDots(){const wk=weekKey(today()),t=today();return `<div class="days">${"MTWTFSS".split("").map((l,i)=>{const d=shift(wk,i);return `<div class="${state.days[d]?"done":""} ${d===t?"now":""}"><i></i>${l}</div>`;}).join("")}</div>`;}
+function vToday(){
+  const s=sessionAt(state.planIdx),done=weekCount(weekKey(today())),didToday=state.days[today()];
+  const lap=Math.floor(state.planIdx/TOTAL);
+  return `
+  <section class="hero">
+    <svg class="box" viewBox="0 0 300 200" preserveAspectRatio="xMidYMin slice"><g fill="none" stroke="#f3f6ee" stroke-width="2"><path d="M40 0v120h220V0M100 0v44h100V0"/><path d="M110 120a44 44 0 0 0 80 0"/><circle cx="150" cy="84" r="2.5" fill="#f3f6ee"/></g></svg>
+    <span class="eyebrow">${state.name?esc(state.name)+", this is your next session":"Your next session"}</span>
+    <h1>Week ${s.week}${s.letter}<br>${esc(s.theme)}</h1>
+    <div class="row"><span class="chip on">${s.mins} min</span><span class="chip">Session ${s.i+1} of ${TOTAL}${lap?", round "+(lap+1):""}</span></div>
+    <button class="btn wide" data-act="start-plan">${state.run&&state.run.kind==="plan"?"Carry on":"Start session"}</button>
+    <div class="row spread"><button class="linkbtn" data-act="plan-prev">Previous session</button><button class="linkbtn" data-act="plan-next">Skip to next</button></div>
+  </section>
+  <div class="seg" role="group" aria-label="Who is training"><button class="${state.partner?"":"on"}" data-act="solo">Training alone</button><button class="${state.partner?"on":""}" data-act="partner">With a partner</button></div>
+  <section class="panel">
+    <h3>What you will do</h3>
+    <ol class="blocks">${s.blocks.map((b,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(D[b].n)}${D[b].a!=="w"?` <span class="mute small">${AREAS[D[b].a]}</span>`:""}</span><span class="m">${D[b].m} min</span></li>`).join("")}</ol>
+  </section>
+  <section class="panel">
+    <div class="row spread"><h3>This week</h3><span class="chip ${done>=state.goal?"kit":""}">${done} of ${state.goal} training days</span></div>
+    ${weekDots()}
+    <p class="small mute">${done>=state.goal?"Weekly goal hit. Anything more is a bonus, so keep a rest day.":didToday?"Trained today. Good work.":(state.goal-done)+" more this week keeps your streak alive."}</p>
+  </section>
+  ${saveOK?"":`<p class="note warn">This browser is not saving your scores. Open the app from your home screen icon, and avoid private browsing.</p>`}`;
+}
+function vDrills(){
+  if(ui.drill)return vDrill(ui.drill);
+  const ids=Object.keys(D).filter(id=>D[id].a!=="w"&&(ui.filter==="all"||D[id].a===ui.filter));
+  return `<h2>Drill library</h2>
+  <div class="filters"><button class="chip ${ui.filter==="all"?"on":""}" data-act="filter" data-a="all">All ${Object.keys(D).length-2}</button>${Object.keys(AREAS).map(a=>`<button class="chip ${ui.filter===a?"on":""}" data-act="filter" data-a="${a}">${AREAS[a]}</button>`).join("")}</div>
+  <div class="dlist">${ids.map(id=>{const d=D[id],b=best(id);return `<button class="ditem" data-act="open-drill" data-id="${id}"><span class="t">${esc(d.n)}</span><span class="v">${b==null?"":showScore(id,b)}</span><span class="s">${AREAS[d.a]} · ${d.m} min · ${d.who==="partner"?"Partner needed":"Solo"}${VID[id]?" · video":""}${b==null?"":" · best so far"}</span></button>`;}).join("")}</div>`;
+}
+function drillBody(id){const d=D[id];return `
+  ${diagram(d.dg)}
+  <ol class="steps">${d.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+  <p class="cue">${esc(d.cue)}</p>
+  <p class="small mute">You need: ${esc(d.kit)}</p>
+  ${videoRow(id)}`;}
+function vDrill(id){const d=D[id],h=state.scores[id]||[];return `
+  <button class="linkbtn" data-act="close-drill">Back to all drills</button>
+  <div class="row"><span class="chip kit">${AREAS[d.a]}</span><span class="chip">${d.m} min</span><span class="chip">${d.who==="partner"?"Partner needed":"Solo"}</span></div>
+  <h1>${esc(d.n)}</h1>
+  <section class="panel">${drillBody(id)}</section>
+  <button class="btn wide" data-act="start-free" data-id="${id}">Run this drill</button>
+  <section class="panel"><h3>Your scores</h3>
+   ${h.length?`<p class="small mute">Scored as ${esc(metText(d.met))}.</p><div class="hist"><span>Best ${showScore(id,best(id))}</span>${spark(h.map(x=>x.v),d.met.t==="time")}<span class="v">${showScore(id,last(id))}<small>last, ${nice(h[h.length-1].d)}</small></span></div>`:`<p class="empty">No scores yet. Scored as ${esc(metText(d.met))}.</p>`}
+  </section>`;
+}
+function vRun(){
+  const r=state.run;
+  if(r.phase==="reflect")return `
+   <span class="eyebrow">Session done</span><h1>How did that feel?</h1>
+   <section class="panel"><h3>Confidence in goal today</h3>
+     <div class="rate">${[1,2,3,4,5].map(n=>`<button class="${r.conf===n?"on":""}" data-act="conf" data-n="${n}" aria-label="${n} out of 5">${n}</button>`).join("")}</div>
+     <p class="small mute">1 is shaky, 5 is nothing gets past me.</p>
+     <label for="rnote">One thing that went well, one thing to work on<textarea id="rnote" data-bind="note">${esc(r.note||"")}</textarea></label>
+   </section>
+   <button class="btn wide" data-act="finish">Save session</button>
+   <button class="btn ghost wide" data-act="back-block">Back to last drill</button>`;
+  const id=r.blocks[r.i],d=D[id],left=remaining(),sc=r.scores[id];
+  return `
+   <div class="row spread"><span class="eyebrow">Block ${r.i+1} of ${r.blocks.length}</span><button class="linkbtn" data-act="quit">${ui.quit?"Tap again to quit without saving":"Quit"}</button></div>
+   <div class="prog"><i style="width:${Math.round(100*r.i/r.blocks.length)}%"></i></div>
+   <h1>${esc(d.n)}</h1>
+   <div class="clock ${left<=0?"done":""}" id="clock" aria-live="off">${clockText(left)}</div>
+   <div class="row" style="justify-content:center"><button class="btn" data-act="toggle">${left<=0?"Time is up":r.endAt?"Pause":"Start clock"}</button><button class="btn ghost" data-act="plus">+1 min</button></div>
+   <div class="row" style="justify-content:center">${canSpeak?`<button class="chip ${state.voice?"on":""}" data-act="voice" aria-pressed="${state.voice}">Voice coach ${state.voice?"on":"off"}</button>`:`<span class="small mute">Voice coach is not available in this browser.</span>`}</div>
+   <section class="panel">${drillBody(id)}</section>
+   ${d.met?`<section class="panel"><h3>Log your score</h3><label for="score">${esc(metText(d.met))}</label>
+     <div class="stepper"><button data-act="dec" aria-label="One less">−</button><input id="score" type="number" inputmode="decimal" min="0" ${d.met.t==="of"?`max="${d.met.n}"`:""} step="${d.met.t==="time"?"0.1":"1"}" value="${sc==null?"":sc}" placeholder="0" data-bind="score"><button data-act="inc" aria-label="One more">+</button></div>
+     ${last(id)!=null?`<p class="small mute">Last time ${showScore(id,last(id))}. Best ${showScore(id,best(id))}.</p>`:`<p class="small mute">First time on this drill. Today sets your starting mark.</p>`}</section>`:""}
+   <button class="btn wide" data-act="next-block">${r.i===r.blocks.length-1?(r.kind==="free"?"Save score":"Finish"):"Next block"}</button>
+   ${r.i>0?`<button class="btn ghost wide" data-act="back-block">Back</button>`:""}`;
+}
+function vMatches(){
+  const ms=state.matches.slice().sort((a,b)=>b.d.localeCompare(a.d));
+  return `<h2>Match log</h2>
+  <section class="panel"><h3>Add a match</h3>
+   <div class="grid2"><label for="m-d">Date<input id="m-d" type="date" value="${today()}"></label><label for="m-o">Opponent<input id="m-o" type="text" autocomplete="off" placeholder="Opposition"></label></div>
+   <div class="grid2"><label for="m-s">Saves<input id="m-s" type="number" inputmode="numeric" min="0" placeholder="0"></label><label for="m-c">Goals conceded<input id="m-c" type="number" inputmode="numeric" min="0" placeholder="0"></label></div>
+   <div class="grid2"><label for="m-x">Crosses claimed<input id="m-x" type="number" inputmode="numeric" min="0" placeholder="0"></label><label for="m-m">Minutes played<input id="m-m" type="number" inputmode="numeric" min="0" placeholder="70"></label></div>
+   <div class="grid2"><label for="m-pg">Passes that found a teammate<input id="m-pg" type="number" inputmode="numeric" min="0" placeholder="0"></label><label for="m-pt">Passes and kicks tried<input id="m-pt" type="number" inputmode="numeric" min="0" placeholder="0"></label></div>
+   <label>How you rated your game</label>
+   <div class="rate">${[1,2,3,4,5].map(n=>`<button class="${ui.mrate===n?"on":""}" data-act="mrate" data-n="${n}" aria-label="${n} out of 5">${n}</button>`).join("")}</div>
+   <label for="m-n">Notes<textarea id="m-n" placeholder="A save you were proud of. A goal you would play differently."></textarea></label>
+   ${ui.msg?`<p class="small warn">${esc(ui.msg)}</p>`:""}
+   <button class="btn wide" data-act="add-match">Save match</button>
+  </section>
+  <section class="panel"><h3>Matches played</h3>
+   ${ms.length?ms.map(m=>{const sh=m.s+m.c;return `<div class="match"><div><strong>${esc(m.o||"Match")}</strong> <span class="mute small">${nice(m.d)}</span></div><div class="big">${sh?Math.round(100*m.s/sh)+"%":"–"}</div>
+     <div class="meta">${m.s} saves, ${m.c} conceded${m.c===0?" · clean sheet":""}${m.x?" · "+m.x+" crosses claimed":""}${m.pt?" · passing "+Math.round(100*m.pg/m.pt)+"%":""}${m.r?" · rated "+m.r+"/5":""}</div>
+     ${m.n?`<div class="meta">${esc(m.n)}</div>`:""}<div class="meta"><button class="linkbtn" data-act="del-match" data-id="${m.id}">Delete</button></div></div>`;}).join(""):`<p class="empty">No matches logged yet. The big number on each match will be your save percentage.</p>`}
+  </section>`;
+}
+function vProgress(){
+  const ss=state.sessions,ms=state.matches,conf=ss.filter(s=>s.conf).map(s=>s.conf);
+  const sv=ms.reduce((t,m)=>t+m.s,0),cn=ms.reduce((t,m)=>t+m.c,0),pg=ms.reduce((t,m)=>t+(m.pg||0),0),pt=ms.reduce((t,m)=>t+(m.pt||0),0);
+  const scored=Object.keys(state.scores).filter(id=>D[id]&&state.scores[id].length);
+  return `<h2>Progress</h2>
+  <div class="tiles"><div class="tile"><b>${ss.length}</b><span>sessions done</span></div><div class="tile"><b>${streak()}</b><span>week streak</span></div><div class="tile"><b>${Object.keys(state.days).length}</b><span>training days</span></div></div>
+  <section class="panel"><div class="row spread"><h3>This week</h3><span class="chip">${weekCount(weekKey(today()))} of ${state.goal}</span></div>${weekDots()}<p class="small mute">A streak week is any week you hit your goal of ${state.goal} training days.</p></section>
+  <section class="panel"><h3>Skills</h3><p class="small mute">Your latest score in each area, as a share of a perfect score.</p>
+   ${Object.keys(AREAS).map(a=>{const p=areaPct(a);return `<div class="bar ${p==null?"none":""}"><span>${AREAS[a]}</span><span class="track"><i style="width:${p||0}%"></i></span><span class="pc">${p==null?"–":p+"%"}</span></div>`;}).join("")}
+  </section>
+  <section class="panel"><h3>Confidence</h3>
+   ${conf.length?`<div class="hist"><span>After each session, out of 5</span>${spark(conf.slice(-12))}<span class="v">${conf[conf.length-1]}/5<small>latest</small></span></div>`:`<p class="empty">Finish a session to start your confidence line.</p>`}
+  </section>
+  <section class="panel"><h3>Matches</h3>
+   ${ms.length?`<div class="tiles"><div class="tile"><b>${sv+cn?Math.round(100*sv/(sv+cn))+"%":"–"}</b><span>save rate</span></div><div class="tile"><b>${ms.filter(m=>m.c===0).length}</b><span>clean sheets</span></div><div class="tile"><b>${pt?Math.round(100*pg/pt)+"%":"–"}</b><span>passing</span></div></div>`:`<p class="empty">Log a match to see save rate, clean sheets and passing.</p>`}
+  </section>
+  <section class="panel"><h3>Drill scores</h3>
+   ${scored.length?scored.map(id=>{const h=state.scores[id];return `<div class="hist"><span>${esc(D[id].n)}<br><span class="small mute">best ${showScore(id,best(id))} · ${h.length} ${h.length===1?"go":"goes"}</span></span>${spark(h.slice(-12).map(x=>x.v),D[id].met.t==="time")}<span class="v">${showScore(id,last(id))}<small>last</small></span></div>`;}).join(""):`<p class="empty">Scores show up here after your first session.</p>`}
+  </section>`;
+}
+function vSettings(){return `
+  <div class="row spread"><h2>Settings</h2><button class="btn ghost sm" data-act="settings">Done</button></div>
+  <section class="panel">
+   <label for="s-name">Keeper's first name<input id="s-name" type="text" autocomplete="off" value="${esc(state.name)}" data-set="name"></label>
+   <label for="s-goal">Training days to aim for each week<select id="s-goal" data-set="goal">${[2,3,4,5].map(n=>`<option value="${n}" ${state.goal===n?"selected":""}>${n} days</option>`).join("")}</select></label>
+   <label for="s-kick">Season starts<input id="s-kick" type="date" value="${kickoff()}" data-set="kickoff"></label>
+  </section>
+  <section class="panel"><h3>Voice coach</h3>
+   <p class="small mute">Reads each block aloud, calls the changes and counts down the last five seconds. Turn the volume up and the silent switch off. Keep the app open on screen while the clock runs.</p>
+   ${canSpeak?`<div class="row"><button class="chip ${state.voice?"on":""}" data-act="voice" aria-pressed="${state.voice}">Voice coach ${state.voice?"on":"off"}</button></div>`:`<p class="small warn">This browser has no built-in voice.</p>`}</section>
+  <section class="panel"><h3>For parents</h3>
+   <p class="small mute">These sessions are short on purpose and sit around team training, not on top of it. Three a week is plenty at 13. Keep one full rest day, skip the session the day before a match, dive only on grass or a soft mat, and stop a drill if anything hurts.</p></section>
+  <section class="panel"><h3>Back up scores</h3>
+   <p class="small mute">Scores live on this phone only. Copy the backup code somewhere safe now and then, such as a note or an email to yourself.</p>
+   <textarea id="backup" aria-label="Backup code" placeholder="Tap Make backup code, or paste a code here to restore"></textarea>
+   <div class="row"><button class="btn ghost sm" data-act="mk-backup">Make backup code</button><button class="btn ghost sm" data-act="restore">Restore from code</button></div>
+   ${ui.msg?`<p class="small ${ui.msg.startsWith("Could")?"warn":"ok"}">${esc(ui.msg)}</p>`:""}
+  </section>
+  <section class="panel"><h3>Add to your home screen</h3><p class="small mute">In Safari, tap Share, then Add to Home Screen. Always open the app from that icon so your scores stay in one place.</p></section>`;}
+
+/* ---------- Voice coach ---------- */
+const canSpeak=("speechSynthesis" in window)&&("SpeechSynthesisUtterance" in window);
+let voiceObj=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices();voiceObj=vs.find(v=>v.lang==="en-IE")||vs.find(v=>v.lang==="en-GB")||vs.find(v=>/^en/.test(v.lang))||null;}catch(e){}}
+if(canSpeak){pickVoice();try{speechSynthesis.onvoiceschanged=pickVoice;}catch(e){}}
+function say(text,cut){if(!canSpeak||!state.voice)return;try{if(cut)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);if(voiceObj)u.voice=voiceObj;u.lang=voiceObj?voiceObj.lang:"en-GB";u.rate=1.02;speechSynthesis.speak(u);}catch(e){}}
+function hush(){if(canSpeak)try{speechSynthesis.cancel();}catch(e){}}
+const CHEER=["Good work. Keep your hands ready.","Looking sharp. Stay on your toes.","That's it. Every rep counts.","Nice. Keep the quality high.","Strong work, keeper."];
+function rounds(first,work,rest,n,restLine){const a=[];let t=first;for(let i=1;i<=n;i++){a.push([t-6,(i===n?"Last round":"Round "+i)+". Get ready."],[t-3,"Three. Two. One. Go!"],[t+Math.round(work/2),CHEER[i%CHEER.length]]);if(i<n)a.push([t+work,restLine]);t+=work+rest;}return a;}
+function cuesFor(id,total,idx){
+  const d=D[id],nm=state.name?state.name+". ":"",intro=[0,nm+d.n+". "+d.steps.join(" ")];let a,soft=false;
+  if(id==="wu")a=[[0,nm+"Warm-up time. Start with an easy jog. Two minutes."],[60,"One more minute of jogging. Nice and relaxed."],[120,"High knees for ten metres, then walk back."],[150,"Now heel flicks."],[180,"Side shuffles, both directions. Stay low."],[210,"Leg swings, ten each leg, then big arm circles."],[240,"Grab your ball. Twenty gentle catches from your own throws, each one a little higher."]];
+  else if(id==="cd")a=[[0,"Cool down. Walk slowly for a minute and let your breathing settle."],[60,"Hamstrings. Reach for your toes and hold."],[85,"Quad stretch, right leg. Hold."],[105,"Quad stretch, left leg."],[125,"Hip stretch. Lunge forward on your right leg."],[145,"Now the left leg."],[165,"Right arm across your chest. Hold."],[185,"Left arm across."],[205,"Stretch your wrists and fingers. They did the work today."],[225,"Shake it out and get a drink of water."]];
+  else if(id==="f1")a=[intro,...rounds(30,30,30,4,"Rest. Remember your number of touches.")];
+  else if(id==="a2")a=[intro,...rounds(40,40,40,3,"Rest. Remember how many you caught.")];
+  else if(id==="k1"){const st=["squat jumps","plank","side to side bounds","press-ups"];a=[[0,nm+"Keeper circuit. Body weight only. Twenty seconds on each station, ten seconds rest, three rounds. Good form beats more reps."]];let t=90;
+    for(let r=1;r<=3;r++){for(let k=0;k<4;k++){if(k===0)a.push([t-7,(r===3?"Last round":"Round "+r)+". First, "+st[0]+"."]);a.push([t-3,"Three. Two. One. Go!"]);if(k<3)a.push([t+20,"Rest. Next, "+st[k+1]+"."]);t+=30;}
+      if(r<3){a.push([t-10,"Round "+r+" done. Thirty seconds rest. Breathe."]);t+=20;}}}
+  else{soft=true;a=[intro,[Math.max(40,Math.round(total*.3)),CHEER[(id.charCodeAt(1)+idx)%CHEER.length]],[Math.round(total*.5),"Halfway. "+d.cue],[Math.round(total*.72),CHEER[(id.charCodeAt(1)+idx+2)%CHEER.length]]];}
+  a=a.filter(q=>q[0]<total-(soft?70:6));
+  const e=(soft?[[60,"One minute left. Keep the quality high."],[30,"Thirty seconds. Finish strong."],[10,"Ten seconds."]]:[]).concat([[5,"Five"],[4,"Four"],[3,"Three"],[2,"Two"],[1,"One"]]);
+  return {a,e};
+}
+function coach(){const r=state.run;if(!r||r.phase==="reflect"||!r.endAt||!state.voice)return;
+  const id=r.blocks[r.i],left=remaining(),total=r.total||D[id].m*60,el=total-left;r.fired=r.fired||{};
+  const c=cuesFor(id,total,r.i);
+  c.a.forEach((q,i)=>{if(el>=q[0]&&!r.fired["a"+i]){r.fired["a"+i]=1;if(el-q[0]<4)say(q[1]);}});
+  c.e.forEach(q=>{if(left<=q[0]&&!r.fired["e"+q[0]]){r.fired["e"+q[0]]=1;if(left>0&&q[0]-left<2)say(q[1],q[0]<=5);}});
+}
+let wl=null;
+async function awake(on){try{if(on){if(navigator.wakeLock&&!wl){wl=await navigator.wakeLock.request("screen");wl.addEventListener("release",()=>{wl=null;});}}else if(wl){const w=wl;wl=null;await w.release();}}catch(e){wl=null;}}
+
+/* ---------- Timer ---------- */
+function remaining(){const r=state.run;if(!r)return 0;return r.endAt?Math.max(0,Math.ceil((r.endAt-Date.now())/1000)):r.left;}
+function clockText(s){return pad(Math.floor(s/60))+":"+pad(s%60);}
+let actx=null,beeped=false;
+function beep(){try{if(!actx)return;[0,.35,.7].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.25,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.25);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.26);});}catch(e){}}
+setInterval(()=>{const r=state.run,c=$("#clock");if(!r||r.phase==="reflect"||!c)return;const s=remaining();c.textContent=clockText(s);coach();
+  if(s<=0&&r.endAt){r.endAt=null;r.left=0;save();if(!beeped){beeped=true;beep();const dd=D[r.blocks[r.i]];say("Time. Well done."+(dd.met?" Count up and log your score.":""),true);}render();}},250);
+function setBlock(i){const r=state.run;r.i=i;r.left=D[r.blocks[i]].m*60;r.total=r.left;r.fired={};r.endAt=null;beeped=false;hush();}
+function startRun(kind,blocks,meta){state.run=Object.assign({kind,blocks,i:0,scores:{},left:0,endAt:null,phase:"drill",conf:0,note:"",t0:Date.now()},meta||{});setBlock(0);save();}
+
+/* ---------- Render ---------- */
+function render(){
+  const k=daysTo();$("#kick").innerHTML=k>0?`<strong>${k}</strong>days to kick-off`:k===0?`<strong>Today</strong>season starts`:`<strong>In season</strong>`;
+  const running=!!state.run;
+  $("#nav").style.display=running||ui.sheet?"none":"";
+  $("#gear").style.display=running?"none":"";
+  const v=view();
+  document.querySelectorAll("nav a").forEach(a=>{if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  $("#main").innerHTML=running?vRun():ui.sheet?vSettings():v==="drills"?vDrills():v==="matches"?vMatches():v==="progress"?vProgress():vToday();
+}
+function toTop(){$("#main").scrollTop=0;}
+function num(id){const el=$(id);const v=el?parseFloat(el.value):NaN;return isNaN(v)||v<0?0:v;}
+function logScores(r,date){Object.keys(r.scores).forEach(id=>{const v=r.scores[id];if(v==null||isNaN(v))return;(state.scores[id]=state.scores[id]||[]).push({d:date,v});});}
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]");if(!el)return;
+  const act=el.dataset.act,r=state.run;let scroll=false;
+  if(act!=="quit")ui.quit=false;
+  if(!["add-match","mk-backup","restore","mrate"].includes(act))ui.msg="";
+  switch(act){
+    case "settings":ui.sheet=!ui.sheet;scroll=true;break;
+    case "voice":state.voice=!state.voice;save();if(state.voice)say("Voice coach on.",true);else hush();break;
+    case "solo":state.partner=false;save();break;
+    case "partner":state.partner=true;save();break;
+    case "plan-prev":state.planIdx=Math.max(0,state.planIdx-1);save();break;
+    case "plan-next":state.planIdx++;save();break;
+    case "start-plan":if(!(r&&r.kind==="plan")){const s=sessionAt(state.planIdx);startRun("plan",s.blocks,{title:"Week "+s.week+s.letter+" "+s.theme,mins:s.mins});}scroll=true;break;
+    case "filter":ui.filter=el.dataset.a;break;
+    case "open-drill":ui.drill=el.dataset.id;scroll=true;break;
+    case "close-drill":ui.drill=null;break;
+    case "start-free":startRun("free",[el.dataset.id],{title:D[el.dataset.id].n,mins:D[el.dataset.id].m});scroll=true;break;
+    case "toggle":if(!r)break;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume();}catch(x){}
+      if(r.endAt){r.left=remaining();r.endAt=null;hush();awake(false);}else if(r.left>0){const resumed=(r.total||0)>r.left;r.endAt=Date.now()+r.left*1000;beeped=false;awake(true);if(resumed)say("Go.");coach();}save();break;
+    case "plus":if(!r)break;if(r.endAt)r.endAt+=60000;else r.left+=60;r.total=(r.total||0)+60;if(r.fired)Object.keys(r.fired).forEach(k=>{if(k[0]==="e")delete r.fired[k];});beeped=false;save();break;
+    case "inc":case "dec":{if(!r)break;const id=r.blocks[r.i],m=D[id].met;let v=(r.scores[id]==null?0:r.scores[id])+(act==="inc"?1:-1);v=Math.max(0,v);if(m.t==="of")v=Math.min(m.n,v);r.scores[id]=Math.round(v*10)/10;save();const inp=$("#score");if(inp)inp.value=r.scores[id];return;}
+    case "next-block":if(!r)break;
+      if(r.i<r.blocks.length-1){setBlock(r.i+1);save();}
+      else if(r.kind==="free"){const d=today();logScores(r,d);state.days[d]=1;state.run=null;hush();awake(false);save();}
+      else{r.phase="reflect";r.endAt=null;hush();awake(false);say("Session done. Great work"+(state.name?", "+state.name:"")+". How did that feel?");save();}
+      scroll=true;break;
+    case "back-block":if(!r)break;if(r.phase==="reflect"){r.phase="drill";}else if(r.i>0)setBlock(r.i-1);save();scroll=true;break;
+    case "conf":if(r){r.conf=+el.dataset.n;save();}break;
+    case "finish":if(!r)break;{const d=today();logScores(r,d);state.days[d]=1;state.sessions.push({d,title:r.title,mins:r.mins,conf:r.conf||0,note:r.note||"",scores:r.scores});state.planIdx++;state.run=null;save();location.hash="progress";scroll=true;}break;
+    case "quit":if(ui.quit){state.run=null;ui.quit=false;hush();awake(false);save();scroll=true;}else ui.quit=true;break;
+    case "mrate":ui.mrate=ui.mrate===+el.dataset.n?0:+el.dataset.n;document.querySelectorAll('[data-act="mrate"]').forEach(b=>b.classList.toggle("on",+b.dataset.n===ui.mrate));return;
+    case "add-match":{const pg=num("#m-pg"),pt=num("#m-pt");
+      if(pg>pt){ui.msg="Passes that found a teammate cannot be more than passes tried.";const keep={};["d","o","s","c","x","m","pg","pt","n"].forEach(k=>keep[k]=$("#m-"+k).value);render();Object.keys(keep).forEach(k=>$("#m-"+k).value=keep[k]);return;}
+      state.matches.push({id:Date.now().toString(36),d:$("#m-d").value||today(),o:$("#m-o").value.trim(),s:num("#m-s"),c:num("#m-c"),x:num("#m-x"),m:num("#m-m"),pg,pt,r:ui.mrate,n:$("#m-n").value.trim()});ui.mrate=0;ui.msg="";save();}break;
+    case "del-match":state.matches=state.matches.filter(m=>m.id!==el.dataset.id);save();break;
+    case "mk-backup":{const code=btoa(unescape(encodeURIComponent(JSON.stringify(state))));const ta=$("#backup");ta.value=code;ta.select();
+      const done=m=>{ui.msg=m;const keep=ta.value;render();$("#backup").value=keep;};
+      try{navigator.clipboard.writeText(code).then(()=>done("Backup code copied. Paste it somewhere safe."),()=>done("Backup code is in the box. Select it and copy."));}catch(x){done("Backup code is in the box. Select it and copy.");}return;}
+    case "restore":{try{const obj=JSON.parse(decodeURIComponent(escape(atob($("#backup").value.trim()))));if(!obj||!Array.isArray(obj.sessions))throw 0;state=Object.assign(fresh(),obj);state.run=null;save();ui.msg="Scores restored.";}catch(x){ui.msg="Could not read that code. Paste the whole backup code and try again.";}}break;
+  }
+  render();if(scroll)toTop();
+});
+document.addEventListener("input",e=>{
+  const t=e.target,r=state.run;
+  if(t.dataset.bind==="score"&&r){const id=r.blocks[r.i],m=D[id].met;let v=parseFloat(t.value);if(isNaN(v)){delete r.scores[id];}else{v=Math.max(0,v);if(m.t==="of")v=Math.min(m.n,v);r.scores[id]=v;}save();}
+  if(t.dataset.bind==="note"&&r){r.note=t.value;save();}
+});
+document.addEventListener("change",e=>{
+  const t=e.target,k=t.dataset.set;if(!k)return;
+  if(k==="goal")state.goal=+t.value;else if(k==="name")state.name=t.value.trim().slice(0,24);else if(k==="kickoff")state.kickoff=t.value;
+  save();if(k!=="name")render();
+});
+window.addEventListener("hashchange",()=>{ui.drill=null;ui.sheet=false;ui.msg="";render();toTop();});
+render();
+</script>
+</body>
+</html>
