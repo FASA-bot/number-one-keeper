@@ -253,7 +253,7 @@ function videoRow(id){const v=VID[id],q=encodeURIComponent(VQ[id]||("goalkeeper 
 
 /* ---------- State ---------- */
 const KEY="number-one-keeper-v1";
-const fresh=()=>({name:"",goal:3,partner:false,voice:true,kickoff:"",planIdx:0,sessions:[],scores:{},days:{},matches:[],run:null});
+const fresh=()=>({name:"",goal:3,partner:false,voice:true,voiceName:"",kickoff:"",planIdx:0,sessions:[],scores:{},days:{},matches:[],run:null});
 let state=fresh();
 let saveOK=true;
 try{const raw=localStorage.getItem(KEY);if(raw)state=Object.assign(fresh(),JSON.parse(raw));}catch(e){saveOK=false;}
@@ -444,7 +444,10 @@ function vSettings(){return `
   </section>
   <section class="panel"><h3>Voice coach</h3>
    <p class="small mute">Reads each block aloud, calls the changes and counts down the last five seconds. Turn the volume up and the silent switch off. Keep the app open on screen while the clock runs.</p>
-   ${canSpeak?`<div class="row"><button class="chip ${state.voice?"on":""}" data-act="voice" aria-pressed="${state.voice}">Voice coach ${state.voice?"on":"off"}</button></div>`:`<p class="small warn">This browser has no built-in voice.</p>`}</section>
+   ${canSpeak?`<div class="row"><button class="chip ${state.voice?"on":""}" data-act="voice" aria-pressed="${state.voice}">Voice coach ${state.voice?"on":"off"}</button></div>
+   <label for="s-voice">Coach's voice<select id="s-voice" data-set="voiceName"><option value="">Automatic${voiceObj&&!state.voiceName?" (using "+esc(voiceObj.name)+")":""}</option>${enVoices().sort((a,b)=>voiceScore(b)-voiceScore(a)).filter(v=>voiceScore(v)>-10).map(v=>`<option value="${esc(v.name)}" ${state.voiceName===v.name?"selected":""}>${esc(v.name)} · ${esc(v.lang.replace("_","-"))}</option>`).join("")}</select></label>
+   <div class="row"><button class="btn ghost sm" data-act="test-voice">Play a sample</button></div>
+   <p class="small mute">The voices come from the phone. For a more natural one on iPhone, open the Settings app, go to Accessibility, then Spoken Content, then Voices, choose English, and download an Enhanced or Premium voice. Come back here and pick it from the list.</p>`:`<p class="small warn">This browser has no built-in voice.</p>`}</section>
   <section class="panel"><h3>For parents</h3>
    <p class="small mute">These sessions are short on purpose and sit around team training, not on top of it. Three a week is plenty at 13. Keep one full rest day, skip the session the day before a match, dive only on grass or a soft mat, and stop a drill if anything hurts.</p></section>
   <section class="panel"><h3>Back up scores</h3>
@@ -458,24 +461,33 @@ function vSettings(){return `
 /* ---------- Voice coach ---------- */
 const canSpeak=("speechSynthesis" in window)&&("SpeechSynthesisUtterance" in window);
 let voiceObj=null;
-function pickVoice(){try{const vs=speechSynthesis.getVoices();voiceObj=vs.find(v=>v.lang==="en-IE")||vs.find(v=>v.lang==="en-GB")||vs.find(v=>/^en/.test(v.lang))||null;}catch(e){}}
-if(canSpeak){pickVoice();try{speechSynthesis.onvoiceschanged=pickVoice;}catch(e){}}
-function say(text,cut){if(!canSpeak||!state.voice)return;try{if(cut)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);if(voiceObj)u.voice=voiceObj;u.lang=voiceObj?voiceObj.lang:"en-GB";u.rate=1.02;speechSynthesis.speak(u);}catch(e){}}
+function enVoices(){try{return speechSynthesis.getVoices().filter(v=>/^en[-_]?/i.test(v.lang));}catch(e){return [];}}
+function voiceScore(v){const id=(v.voiceURI||"")+" "+v.name,l=v.lang.replace("_","-");let n=0;
+  if(/premium/i.test(id))n+=6;else if(/enhanced/i.test(id))n+=5;else if(/natural|neural|online/i.test(id))n+=4;
+  if(/compact/i.test(id))n-=1;
+  if(/eloquence|speech\.synthesis|novelty|whisper|bells|zarvox|trinoids|albert|bahh|boing|bubbles|cellos|jester|organ|superstar|wobble|bad news|good news|fred|junior|kathy|ralph/i.test(id))n-=20;
+  if(l==="en-IE")n+=3;else if(l==="en-GB")n+=2;else if(l==="en-AU")n+=1;
+  return n;}
+function pickVoice(){const vs=enVoices();voiceObj=(state.voiceName&&vs.find(v=>v.name===state.voiceName))||vs.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;}
+if(canSpeak){pickVoice();try{speechSynthesis.onvoiceschanged=()=>{pickVoice();const a=document.activeElement;if(ui.sheet&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render();};}catch(e){}}
+function say(text,cut){if(!canSpeak||!state.voice)return;try{if(cut)speechSynthesis.cancel();
+  const parts=text.length>70?(text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text]):[text];
+  parts.forEach(t=>{t=t.trim();if(!t)return;const u=new SpeechSynthesisUtterance(t);if(voiceObj)u.voice=voiceObj;u.lang=voiceObj?voiceObj.lang.replace("_","-"):"en-GB";u.rate=.96;u.pitch=1;speechSynthesis.speak(u);});}catch(e){}}
 function hush(){if(canSpeak)try{speechSynthesis.cancel();}catch(e){}}
-const CHEER=["Good work. Keep your hands ready.","Looking sharp. Stay on your toes.","That's it. Every rep counts.","Nice. Keep the quality high.","Strong work, keeper."];
+const CHEER=["That's good work. Keep those hands ready.","You're looking sharp. Stay on your toes.","That's the way. Make every one count.","Nice and tidy. Don't rush it.","Brilliant, keeper. Keep going."];
 function rounds(first,work,rest,n,restLine){const a=[];let t=first;for(let i=1;i<=n;i++){a.push([t-6,(i===n?"Last round":"Round "+i)+". Get ready."],[t-3,"Three. Two. One. Go!"],[t+Math.round(work/2),CHEER[i%CHEER.length]]);if(i<n)a.push([t+work,restLine]);t+=work+rest;}return a;}
 function cuesFor(id,total,idx){
-  const d=D[id],nm=state.name?state.name+". ":"",intro=[0,nm+d.n+". "+d.steps.join(" ")];let a,soft=false;
-  if(id==="wu")a=[[0,nm+"Warm-up time. Start with an easy jog. Two minutes."],[60,"One more minute of jogging. Nice and relaxed."],[120,"High knees for ten metres, then walk back."],[150,"Now heel flicks."],[180,"Side shuffles, both directions. Stay low."],[210,"Leg swings, ten each leg, then big arm circles."],[240,"Grab your ball. Twenty gentle catches from your own throws, each one a little higher."]];
+  const d=D[id],nm=state.name?"Right, "+state.name+". ":"Right. ",intro=[0,nm+"Next up, "+d.n+". "+d.steps.join(" ")+" Off you go."];let a,soft=false;
+  if(id==="wu")a=[[0,nm+"Let's get warm. Start with an easy jog for two minutes."],[60,"One more minute of jogging. Nice and relaxed."],[120,"High knees for ten metres, then walk back."],[150,"Now heel flicks."],[180,"Side shuffles, both directions. Stay low."],[210,"Leg swings, ten each leg, then big arm circles."],[240,"Grab your ball. Twenty gentle catches from your own throws, each one a little higher."]];
   else if(id==="cd")a=[[0,"Cool down. Walk slowly for a minute and let your breathing settle."],[60,"Hamstrings. Reach for your toes and hold."],[85,"Quad stretch, right leg. Hold."],[105,"Quad stretch, left leg."],[125,"Hip stretch. Lunge forward on your right leg."],[145,"Now the left leg."],[165,"Right arm across your chest. Hold."],[185,"Left arm across."],[205,"Stretch your wrists and fingers. They did the work today."],[225,"Shake it out and get a drink of water."]];
   else if(id==="f1")a=[intro,...rounds(30,30,30,4,"Rest. Remember your number of touches.")];
   else if(id==="a2")a=[intro,...rounds(40,40,40,3,"Rest. Remember how many you caught.")];
-  else if(id==="k1"){const st=["squat jumps","plank","side to side bounds","press-ups"];a=[[0,nm+"Keeper circuit. Body weight only. Twenty seconds on each station, ten seconds rest, three rounds. Good form beats more reps."]];let t=90;
+  else if(id==="k1"){const st=["squat jumps","plank","side to side bounds","press-ups"];a=[[0,nm+"Time for the keeper circuit. Body weight only. Twenty seconds on each station, ten seconds rest, three rounds. Good form beats more reps."]];let t=90;
     for(let r=1;r<=3;r++){for(let k=0;k<4;k++){if(k===0)a.push([t-7,(r===3?"Last round":"Round "+r)+". First, "+st[0]+"."]);a.push([t-3,"Three. Two. One. Go!"]);if(k<3)a.push([t+20,"Rest. Next, "+st[k+1]+"."]);t+=30;}
       if(r<3){a.push([t-10,"Round "+r+" done. Thirty seconds rest. Breathe."]);t+=20;}}}
-  else{soft=true;a=[intro,[Math.max(40,Math.round(total*.3)),CHEER[(id.charCodeAt(1)+idx)%CHEER.length]],[Math.round(total*.5),"Halfway. "+d.cue],[Math.round(total*.72),CHEER[(id.charCodeAt(1)+idx+2)%CHEER.length]]];}
+  else{soft=true;a=[intro,[Math.max(40,Math.round(total*.3)),CHEER[(id.charCodeAt(1)+idx)%CHEER.length]],[Math.round(total*.5),"That's halfway. Remember, "+d.cue.charAt(0).toLowerCase()+d.cue.slice(1)],[Math.round(total*.72),CHEER[(id.charCodeAt(1)+idx+2)%CHEER.length]]];}
   a=a.filter(q=>q[0]<total-(soft?70:6));
-  const e=(soft?[[60,"One minute left. Keep the quality high."],[30,"Thirty seconds. Finish strong."],[10,"Ten seconds."]]:[]).concat([[5,"Five"],[4,"Four"],[3,"Three"],[2,"Two"],[1,"One"]]);
+  const e=(soft?[[60,"One minute to go. Keep the quality up."],[30,"Thirty seconds left. Finish strong."],[10,"Last ten seconds."]]:[]).concat([[5,"Five"],[4,"Four"],[3,"Three"],[2,"Two"],[1,"One"]]);
   return {a,e};
 }
 function coach(){const r=state.run;if(!r||r.phase==="reflect"||!r.endAt||!state.voice)return;
@@ -493,7 +505,7 @@ function clockText(s){return pad(Math.floor(s/60))+":"+pad(s%60);}
 let actx=null,beeped=false;
 function beep(){try{if(!actx)return;[0,.35,.7].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.25,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.25);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.26);});}catch(e){}}
 setInterval(()=>{const r=state.run,c=$("#clock");if(!r||r.phase==="reflect"||!c)return;const s=remaining();c.textContent=clockText(s);coach();
-  if(s<=0&&r.endAt){r.endAt=null;r.left=0;save();if(!beeped){beeped=true;beep();const dd=D[r.blocks[r.i]];say("Time. Well done."+(dd.met?" Count up and log your score.":""),true);}render();}},250);
+  if(s<=0&&r.endAt){r.endAt=null;r.left=0;save();if(!beeped){beeped=true;beep();const dd=D[r.blocks[r.i]];say("And that's time. Well done."+(dd.met?" Count them up and put your score in.":""),true);}render();}},250);
 function setBlock(i){const r=state.run;r.i=i;r.left=D[r.blocks[i]].m*60;r.total=r.left;r.fired={};r.endAt=null;beeped=false;hush();}
 function startRun(kind,blocks,meta){state.run=Object.assign({kind,blocks,i:0,scores:{},left:0,endAt:null,phase:"drill",conf:0,note:"",t0:Date.now()},meta||{});setBlock(0);save();}
 
@@ -518,6 +530,7 @@ document.addEventListener("click",e=>{
   if(!["add-match","mk-backup","restore","mrate"].includes(act))ui.msg="";
   switch(act){
     case "settings":ui.sheet=!ui.sheet;scroll=true;break;
+    case "test-voice":say("Great save, keeper. Thirty seconds left. Three. Two. One. Go!",true);return;
     case "voice":state.voice=!state.voice;save();if(state.voice)say("Voice coach on.",true);else hush();break;
     case "solo":state.partner=false;save();break;
     case "partner":state.partner=true;save();break;
@@ -560,7 +573,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{
   const t=e.target,k=t.dataset.set;if(!k)return;
-  if(k==="goal")state.goal=+t.value;else if(k==="name")state.name=t.value.trim().slice(0,24);else if(k==="kickoff")state.kickoff=t.value;
+  if(k==="goal")state.goal=+t.value;else if(k==="name")state.name=t.value.trim().slice(0,24);else if(k==="kickoff")state.kickoff=t.value;else if(k==="voiceName"){state.voiceName=t.value;pickVoice();}
   save();if(k!=="name")render();
 });
 window.addEventListener("hashchange",()=>{ui.drill=null;ui.sheet=false;ui.msg="";render();toTop();});
